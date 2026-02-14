@@ -12,156 +12,14 @@ For the hackathon MVP, the system focuses on common chronic conditions (diabetes
 
 ## 2. High-Level Architecture
 
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                          PRESENTATION LAYER                         │
-│  ┌────────────────────────────────────────────────────────────┐    │
-│  │  React Frontend (TypeScript + Tailwind CSS)               │    │
-│  │  • Patient Input Forms  • Summary Display                 │    │
-│  │  • Recommendation Viewer  • Explainability Dashboard      │    │
-│  └────────────────────────────────────────────────────────────┘    │
-└──────────────────────────────┬──────────────────────────────────────┘
-                               │ REST API (HTTPS)
-┌──────────────────────────────┴──────────────────────────────────────┐
-│                          API GATEWAY LAYER                          │
-│  ┌────────────────────────────────────────────────────────────┐    │
-│  │  FastAPI Backend (Python 3.10+)                            │    │
-│  │  • Request Validation  • Rate Limiting  • Error Handling   │    │
-│  └────────────────────────────────────────────────────────────┘    │
-└──────────────────────────────┬──────────────────────────────────────┘
-                               │
-┌──────────────────────────────┴──────────────────────────────────────┐
-│                       CORE PROCESSING LAYER                         │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐     │
-│  │   Patient    │  │  Clinical    │  │   Recommendation     │     │
-│  │  Processor   │→ │  Extractor   │→ │     Generator        │     │
-│  │              │  │              │  │                      │     │
-│  │ • Validate   │  │ • Extract Dx │  │ • LLM Integration    │     │
-│  │ • Normalize  │  │ • Extract    │  │ • Confidence Scoring │     │
-│  │ • Summarize  │  │   Labs/Meds  │  │ • Citation Formatter │     │
-│  └──────────────┘  └──────────────┘  └──────────────────────┘     │
-└──────────────────────────────┬──────────────────────────────────────┘
-                               │
-┌──────────────────────────────┴──────────────────────────────────────┐
-│                          RAG PIPELINE LAYER                         │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐     │
-│  │  Embedding   │  │    Vector    │  │    Retrieval         │     │
-│  │   Service    │→ │   Database   │→ │     Ranker           │     │
-│  │              │  │              │  │                      │     │
-│  │ • Query      │  │ • ChromaDB/  │  │ • Semantic Search    │     │
-│  │   Embedding  │  │   Pinecone   │  │ • Relevance Scoring  │     │
-│  │ • Document   │  │ • Guideline  │  │ • Context Formation  │     │
-│  │   Embedding  │  │   Vectors    │  │                      │     │
-│  └──────────────┘  └──────────────┘  └──────────────────────┘     │
-└──────────────────────────────┬──────────────────────────────────────┘
-                               │
-┌──────────────────────────────┴──────────────────────────────────────┐
-│                      EXTERNAL SERVICES LAYER                        │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐     │
-│  │   LLM API    │  │  Guideline   │  │   Audit & Logging    │     │
-│  │ (GPT-4 or    │  │   Sources    │  │                      │     │
-│  │  Claude)     │  │ (ADA, WHO,   │  │ • PostgreSQL/SQLite  │     │
-│  │              │  │  CDC, NIH)   │  │ • Structured Logs    │     │
-│  └──────────────┘  └──────────────┘  └──────────────────────┘     │
-└─────────────────────────────────────────────────────────────────────┘
-```
+![Archi_design](images/archi_design.png)
 
 The architecture follows a layered design pattern with clear separation of concerns. The Presentation Layer handles user interaction through a React-based web interface. The API Gateway Layer provides RESTful endpoints with FastAPI, handling authentication, rate limiting, and request validation. The Core Processing Layer contains the business logic for patient data processing, clinical entity extraction, and recommendation generation. The RAG Pipeline Layer manages semantic search over clinical guidelines using vector embeddings. Finally, the External Services Layer integrates with LLM APIs, guideline sources, and audit logging systems. This modular design enables independent scaling, testing, and updates of each component.
 
 ## 3. Data Flow
 
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│ 1. USER INPUT                                                   │
-│    Patient Record (JSON): Demographics, Diagnoses, Labs, Meds  │
-└────────────────────────────┬────────────────────────────────────┘
-                             ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ 2. VALIDATION & NORMALIZATION                                   │
-│    • Schema validation (Pydantic models)                        │
-│    • ICD-10 code validation                                     │
-│    • LOINC code normalization for labs                          │
-│    • Data completeness checks                                   │
-└────────────────────────────┬────────────────────────────────────┘
-                             ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ 3. CLINICAL EXTRACTION                                          │
-│    • Extract diagnoses → ["Type 2 Diabetes", "Hypertension"]   │
-│    • Extract labs → [{test: "HbA1c", value: 8.2, unit: "%"}]   │
-│    • Extract medications → [{name: "Metformin", dose: "500mg"}] │
-│    • Flag critical values (HbA1c > 7%, BP > 140/90)            │
-│    • Generate patient summary (LLM-based)                       │
-└────────────────────────────┬────────────────────────────────────┘
-                             ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ 4. QUERY CONSTRUCTION                                           │
-│    Build semantic query from extracted data:                    │
-│    "Type 2 Diabetes management HbA1c 8.2% Metformin therapy"   │
-└────────────────────────────┬────────────────────────────────────┘
-                             ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ 5. EMBEDDING GENERATION                                         │
-│    • Generate query embedding (768-1536 dimensions)             │
-│    • Model: text-embedding-ada-002 or all-MiniLM-L6-v2         │
-└────────────────────────────┬────────────────────────────────────┘
-                             ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ 6. VECTOR SEARCH                                                │
-│    • Query ChromaDB with embedding                              │
-│    • Retrieve top-k guidelines (k=5-10)                         │
-│    • Return: guideline text + metadata + relevance scores       │
-└────────────────────────────┬────────────────────────────────────┘
-                             ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ 7. RETRIEVAL RANKING                                            │
-│    Re-rank results based on:                                    │
-│    • Cosine similarity score (base)                             │
-│    • Guideline recency (boost recent publications)              │
-│    • Recommendation strength (Strong > Moderate > Weak)         │
-│    • Evidence level (A > B > C)                                 │
-└────────────────────────────┬────────────────────────────────────┘
-                             ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ 8. CONTEXT FORMATION                                            │
-│    Format prompt for LLM:                                       │
-│    • Patient summary                                            │
-│    • Extracted clinical data                                    │
-│    • Top-5 retrieved guidelines with metadata                   │
-│    • Instructions for recommendation generation                 │
-└────────────────────────────┬────────────────────────────────────┘
-                             ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ 9. LLM RECOMMENDATION GENERATION                                │
-│    • Send context to GPT-4/Claude                               │
-│    • Generate 2-4 evidence-based recommendations                │
-│    • Include reasoning and citations                            │
-│    • Assess recommendation strength                             │
-└────────────────────────────┬────────────────────────────────────┘
-                             ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ 10. POST-PROCESSING                                             │
-│     • Calculate confidence scores (multi-factor algorithm)      │
-│     • Format citations with source links                        │
-│     • Generate explainability data                              │
-│     • Apply safety filters and disclaimers                      │
-└────────────────────────────┬────────────────────────────────────┘
-                             ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ 11. AUDIT LOGGING                                               │
-│     • Log request metadata                                      │
-│     • Log retrieved guidelines and scores                       │
-│     • Log generated recommendations                             │
-│     • Store for compliance and debugging                        │
-└────────────────────────────┬────────────────────────────────────┘
-                             ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ 12. RESPONSE DELIVERY                                           │
-│     JSON Response: summary + recommendations + confidence +     │
-│     explanations + citations                                    │
-└─────────────────────────────────────────────────────────────────┘
-```
+![data_flow](images/data_flow.png)
 
 ## 4. RAG & AI Workflow
 
@@ -262,6 +120,7 @@ LLM hallucination risk remains despite RAG grounding; all recommendations requir
 
 **Future Enhancements:**
 Short-term improvements include expanding guideline sources (specialty societies, international guidelines), implementing user authentication and session management, and adding support for more clinical conditions. Medium-term enhancements include multi-modal support (lab trends, vital sign graphs, medical images), FHIR integration for EHR connectivity, real-time guideline updates with versioning, and advanced explainability with attention visualization. Long-term vision includes fine-tuned medical LLMs for better clinical reasoning, active learning from clinician feedback, predictive analytics for patient outcomes, multi-language support for global deployment, and mobile applications for point-of-care use.
+
 
 
 
