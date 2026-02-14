@@ -26,7 +26,7 @@ The architecture follows a layered design pattern with clear separation of conce
 
 The RAG pipeline is the technical core of EviCare, bridging patient data with clinical knowledge through semantic search and LLM reasoning.
 
-**Guideline Ingestion Pipeline:**
+- **Guideline Ingestion Pipeline:**
 Clinical guidelines are sourced from publicly available repositories (ADA, WHO, CDC, NIH). Documents are parsed from PDF/HTML formats and preprocessed to extract clean text. The chunking strategy splits documents by logical sections (e.g., "Glycemic Targets", "Medication Management") with chunk sizes of 512-1024 tokens and 50-token overlap to preserve context. Each chunk is enriched with metadata including source organization, publication date, section title, recommendation strength (Strong/Moderate/Weak), and evidence level (A/B/C). Embeddings are generated using OpenAI's text-embedding-ada-002 (1536 dimensions) or the open-source all-MiniLM-L6-v2 model (384 dimensions). The resulting vectors and metadata are stored in ChromaDB for the MVP, with Pinecone as the production alternative for better scalability.
 
 **Query Processing:**
@@ -120,6 +120,7 @@ LLM hallucination risk remains despite RAG grounding; all recommendations requir
 
 **Future Enhancements:**
 Short-term improvements include expanding guideline sources (specialty societies, international guidelines), implementing user authentication and session management, and adding support for more clinical conditions. Medium-term enhancements include multi-modal support (lab trends, vital sign graphs, medical images), FHIR integration for EHR connectivity, real-time guideline updates with versioning, and advanced explainability with attention visualization. Long-term vision includes fine-tuned medical LLMs for better clinical reasoning, active learning from clinician feedback, predictive analytics for patient outcomes, multi-language support for global deployment, and mobile applications for point-of-care use.
+
 
 
 
