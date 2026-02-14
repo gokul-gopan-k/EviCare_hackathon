@@ -1,12 +1,12 @@
-# Clinical Copilot - Design Document
+# EviCare - Design Document
 
 ## 1. System Overview
 
-Clinical Copilot is an AI-powered clinical decision-support system that helps healthcare providers make evidence-based treatment decisions by automatically analyzing patient data and matching it to relevant clinical guidelines. The system addresses the challenge of information overload in healthcare, where providers must synthesize complex patient records while staying current with thousands of clinical guidelines and medical literature.
+EviCare is an AI-powered clinical decision-support system that helps healthcare providers make evidence-based treatment decisions by automatically analyzing patient data and matching it to relevant clinical guidelines. The system addresses the challenge of information overload in healthcare, where providers must synthesize complex patient records while staying current with thousands of clinical guidelines and medical literature.
 
 The system ingests synthetic patient records containing diagnoses, laboratory results, medications, and vital signs. It uses Natural Language Processing (NLP) to extract and normalize clinical entities, then employs Retrieval-Augmented Generation (RAG) to semantically match patient conditions against a vector database of publicly available clinical guidelines from sources like the American Diabetes Association (ADA), World Health Organization (WHO), and Centers for Disease Control (CDC).
 
-Using Large Language Models (LLMs) as a reasoning layer, Clinical Copilot generates evidence-backed recommendations with direct citations to source guidelines. Each recommendation includes a confidence score (0-100), detailed explanation of the reasoning process, and transparency into which patient data points influenced the decision. The system emphasizes responsible AI principles through comprehensive audit logging, bias mitigation strategies, and prominent disclaimers that position it as decision support rather than autonomous decision-making.
+Using Large Language Models (LLMs) as a reasoning layer, EviCare generates evidence-backed recommendations with direct citations to source guidelines. Each recommendation includes a confidence score (0-100), detailed explanation of the reasoning process, and transparency into which patient data points influenced the decision. The system emphasizes responsible AI principles through comprehensive audit logging, bias mitigation strategies, and prominent disclaimers that position it as decision support rather than autonomous decision-making.
 
 For the hackathon MVP, the system focuses on common chronic conditions (diabetes, hypertension, hyperlipidemia) using synthetic patient data and publicly available guidelines. The architecture is designed to be modular and scalable, with clear separation between data ingestion, RAG pipeline, LLM reasoning, and presentation layers.
 
@@ -166,7 +166,7 @@ The architecture follows a layered design pattern with clear separation of conce
 ## 4. RAG & AI Workflow
 
 
-The RAG pipeline is the technical core of Clinical Copilot, bridging patient data with clinical knowledge through semantic search and LLM reasoning.
+The RAG pipeline is the technical core of EviCare, bridging patient data with clinical knowledge through semantic search and LLM reasoning.
 
 **Guideline Ingestion Pipeline:**
 Clinical guidelines are sourced from publicly available repositories (ADA, WHO, CDC, NIH). Documents are parsed from PDF/HTML formats and preprocessed to extract clean text. The chunking strategy splits documents by logical sections (e.g., "Glycemic Targets", "Medication Management") with chunk sizes of 512-1024 tokens and 50-token overlap to preserve context. Each chunk is enriched with metadata including source organization, publication date, section title, recommendation strength (Strong/Moderate/Weak), and evidence level (A/B/C). Embeddings are generated using OpenAI's text-embedding-ada-002 (1536 dimensions) or the open-source all-MiniLM-L6-v2 model (384 dimensions). The resulting vectors and metadata are stored in ChromaDB for the MVP, with Pinecone as the production alternative for better scalability.
@@ -262,5 +262,6 @@ LLM hallucination risk remains despite RAG grounding; all recommendations requir
 
 **Future Enhancements:**
 Short-term improvements include expanding guideline sources (specialty societies, international guidelines), implementing user authentication and session management, and adding support for more clinical conditions. Medium-term enhancements include multi-modal support (lab trends, vital sign graphs, medical images), FHIR integration for EHR connectivity, real-time guideline updates with versioning, and advanced explainability with attention visualization. Long-term vision includes fine-tuned medical LLMs for better clinical reasoning, active learning from clinician feedback, predictive analytics for patient outcomes, multi-language support for global deployment, and mobile applications for point-of-care use.
+
 
 
