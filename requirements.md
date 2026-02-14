@@ -1,10 +1,10 @@
-# Clinical Copilot - Requirements Document
+# EviCare - Requirements Document
 
 ## 1. Problem Statement
 
 Healthcare providers face increasing cognitive load when reviewing patient records, synthesizing clinical data, and making evidence-based treatment decisions. The volume of medical literature and clinical guidelines makes it challenging to consistently apply the latest evidence-based practices at the point of care.
 
-Clinical Copilot addresses this challenge by providing an AI-powered decision-support assistant that automatically summarizes patient data, extracts key clinical information, and matches patient conditions to relevant clinical guidelines with evidence-backed recommendations.
+EviCare addresses this challenge by providing an AI-powered decision-support assistant that automatically summarizes patient data, extracts key clinical information, and matches patient conditions to relevant clinical guidelines with evidence-backed recommendations.
 
 ## 2. Goals and Objectives
 
@@ -255,5 +255,6 @@ Clinical Copilot addresses this challenge by providing an AI-powered decision-su
 - Then appropriate disclaimers are visible
 - And limitations are clearly communicated
 - And confidence/uncertainty is transparently shown
+
 
 
