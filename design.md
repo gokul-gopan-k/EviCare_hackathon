@@ -29,19 +29,19 @@ The RAG pipeline is the technical core of EviCare, bridging patient data with cl
 - **Guideline Ingestion Pipeline:**
 Clinical guidelines are sourced from publicly available repositories (ADA, WHO, CDC, NIH). Documents are parsed from PDF/HTML formats and preprocessed to extract clean text. The chunking strategy splits documents by logical sections (e.g., "Glycemic Targets", "Medication Management") with chunk sizes of 512-1024 tokens and 50-token overlap to preserve context. Each chunk is enriched with metadata including source organization, publication date, section title, recommendation strength (Strong/Moderate/Weak), and evidence level (A/B/C). Embeddings are generated using OpenAI's text-embedding-ada-002 (1536 dimensions) or the open-source all-MiniLM-L6-v2 model (384 dimensions). The resulting vectors and metadata are stored in ChromaDB for the MVP, with Pinecone as the production alternative for better scalability.
 
-**Query Processing:**
+- **Query Processing:**
 When a patient record is processed, the system constructs a semantic query by combining primary diagnoses with relevant clinical context. For example, a patient with Type 2 Diabetes and HbA1c of 8.2% on Metformin generates the query: "Type 2 Diabetes management HbA1c 8.2% inadequate glycemic control Metformin monotherapy". This query is embedded using the same model used for guideline ingestion to ensure vector space compatibility.
 
-**Semantic Retrieval:**
+- **Semantic Retrieval:**
 The query embedding is used to search the vector database using cosine similarity. The system retrieves the top-k most similar guideline chunks (typically k=5-10). Initial results are ranked purely by vector similarity, but a re-ranking algorithm applies additional heuristics: recent guidelines receive a recency boost (decay factor over 10 years), strong recommendations are boosted over weak ones, and high evidence levels (A > B > C) receive priority. This multi-factor ranking ensures the most relevant and authoritative guidelines surface to the top.
 
-**Context Formation:**
+- **Context Formation:**
 The top-ranked guidelines are formatted into a structured context for the LLM. The prompt includes: (1) a concise patient summary, (2) extracted clinical data (diagnoses, labs, medications), (3) the retrieved guideline excerpts with full metadata, and (4) explicit instructions to generate evidence-based recommendations with citations. The prompt emphasizes grounding all recommendations in the provided guidelines to minimize hallucination risk.
 
-**LLM Reasoning Layer:**
+- **LLM Reasoning Layer:**
 The formatted context is sent to GPT-4 or Claude with a temperature of 0.3 to balance creativity with consistency. The LLM generates 2-4 clinical recommendations, each with a clear title, detailed description, reasoning explanation, and citation to the source guideline. The model is instructed to assess recommendation strength (Strong/Moderate/Weak) and acknowledge uncertainty when evidence is limited or conflicting.
 
-**Confidence Scoring Algorithm:**
+- **Confidence Scoring Algorithm:**
 A multi-factor algorithm calculates confidence scores (0-100) for each recommendation:
 - Retrieval Quality (30 points): Average relevance score of cited guidelines
 - Evidence Strength (25 points): Evidence level A=25, B=18, C=10
@@ -51,7 +51,7 @@ A multi-factor algorithm calculates confidence scores (0-100) for each recommend
 
 This transparent scoring provides users with quantitative assessment of recommendation reliability.
 
-**Explainability Generation:**
+- **Explainability Generation:**
 For each recommendation, the system generates structured explanations including: (1) patient factors that influenced the decision (e.g., "HbA1c 8.2% above target"), (2) guideline basis with relevance scores, and (3) a reasoning chain showing step-by-step logic. This explainability data is surfaced in the UI through expandable panels, confidence breakdowns, and citation links.
 
 ## 5. Database & Storage
@@ -59,13 +59,13 @@ For each recommendation, the system generates structured explanations including:
 
 The system uses a hybrid storage architecture combining vector and relational databases.
 
-**Vector Database (ChromaDB/Pinecone):**
+- **Vector Database (ChromaDB/Pinecone):**
 Stores clinical guideline embeddings with rich metadata. Each entry contains a 384 or 1536-dimensional vector, the original guideline text chunk, and metadata fields: source organization, publication date, section title, recommendation strength, evidence level, condition tags, and source URL. ChromaDB is used for the MVP due to its simplicity and local deployment capability. For production, Pinecone offers better performance, managed infrastructure, and horizontal scalability. The vector database supports semantic search with sub-second query latency for collections up to 100,000 guideline chunks.
 
-**Relational Database (SQLite/PostgreSQL):**
+- **Relational Database (SQLite/PostgreSQL):**
 Stores structured application data. The patient_requests table logs all incoming requests with patient_id, request_data (JSONB), timestamp, and processing_time_ms. The recommendations table stores generated recommendations with foreign key references to requests, including title, description, confidence_score, reasoning, and citations (JSONB). The audit_log table provides comprehensive tracking of all system events (retrieval, generation, feedback) with event_type, event_data (JSONB), and timestamp. The feedback table captures clinician feedback on recommendations for continuous improvement. SQLite is used for MVP simplicity, while PostgreSQL provides production-grade reliability, JSONB indexing, and connection pooling.
 
-**Caching Layer:**
+- **Caching Layer:**
 Redis is used in production to cache frequently accessed data: query embeddings (1-hour TTL), guideline retrieval results (30-minute TTL), and LLM responses for identical queries (24-hour TTL). This reduces API costs and improves response times for common queries.
 
 ## 6. Explainability & Responsible AI
@@ -73,53 +73,54 @@ Redis is used in production to cache frequently accessed data: query embeddings 
 
 Explainability and responsible AI are core design principles, not afterthoughts.
 
-**Transparency Mechanisms:**
+- **Transparency Mechanisms:**
 Every recommendation includes a detailed explanation showing: (1) which patient data points influenced the decision (e.g., "HbA1c 8.2% is 1.2% above target"), (2) which guidelines were retrieved and their relevance scores, (3) a step-by-step reasoning chain from patient data to recommendation, and (4) direct citations with links to source guidelines. The UI visualizes confidence scores with color-coded gauges (green >75, yellow 50-75, red <50) and provides expandable panels showing the confidence factor breakdown. Users can click citations to view the full guideline text, ensuring complete traceability.
 
-**Confidence Scoring:**
+- **Confidence Scoring:**
 The multi-factor confidence algorithm provides quantitative assessment of recommendation reliability. Each factor (retrieval quality, evidence strength, recommendation strength, guideline recency, LLM certainty) contributes a weighted score, and the breakdown is visible to users. Low-confidence recommendations (<50) trigger prominent warnings: "Low confidence - requires clinical validation". This prevents over-reliance on uncertain recommendations.
 
-**Safety Filters:**
+- **Safety Filters:**
 All recommendations pass through safety filters before delivery. High-risk keywords (surgery, discontinue, emergency) trigger mandatory review flags. Recommendations without guideline citations are flagged with warnings. Low-confidence recommendations receive prominent disclaimers. Every recommendation includes a standard disclaimer: "This is AI-generated decision support. All recommendations must be validated by a qualified healthcare provider."
 
-**Bias Mitigation:**
+- **Bias Mitigation:**
 The system addresses bias through diverse guideline sources (ADA, WHO, CDC, NIH, specialty societies) to avoid single-source bias. Demographic awareness flags when guidelines may not apply to specific populations (e.g., pediatric vs. adult guidelines). The audit log tracks recommendation patterns across demographic groups to enable post-hoc bias analysis. Future versions will implement fairness metrics to quantify and mitigate demographic disparities.
 
-**Audit Trail:**
+- **Audit Trail:**
 Comprehensive logging captures every system action: input data (anonymized), retrieved guidelines with relevance scores, generated recommendations, confidence scores, and user feedback. Logs are structured (JSON) and timestamped for compliance and debugging. The audit trail enables retrospective analysis of system behavior, identification of failure modes, and continuous improvement through feedback loops.
 
-**Human-in-the-Loop Design:**
+- **Human-in-the-Loop Design:**
 The system is explicitly positioned as decision support, not autonomous decision-making. The UI emphasizes that recommendations require clinical validation. Feedback mechanisms allow clinicians to rate recommendations (helpful/not helpful/incorrect) and provide comments. This feedback is logged for future model improvement and guideline curation. The system never claims to replace clinical judgment, only to augment it with evidence-based insights.
 
-**Limitations Disclosure:**
+- **Limitations Disclosure:**
 The system prominently discloses limitations: not FDA approved, for demonstration purposes only, trained on synthetic data, limited to guideline-based care, cannot handle cases requiring clinical experience beyond guidelines, and may not capture nuanced patient-specific factors. These limitations are displayed in the UI and included in all documentation.
 
 ## 7. Deployment & Scalability
 
 
-**MVP Deployment (Hackathon):**
+- **MVP Deployment (Hackathon):**
 The MVP runs locally with Docker Compose orchestrating three containers: React frontend (port 3000), FastAPI backend (port 8000), and ChromaDB (port 8001). SQLite provides local relational storage. Environment variables store API keys for OpenAI. The entire stack can be launched with `docker-compose up` for demo purposes. This setup requires no cloud infrastructure and runs on a standard laptop.
 
-**Production Deployment:**
+- **Production Deployment:**
 Production deployment uses cloud infrastructure (AWS/Azure/GCP) with the following architecture: Frontend is built as static assets and served via CDN (CloudFront/Azure CDN) for global low-latency access. Backend API runs on containerized instances (ECS/AKS/Cloud Run) behind an Application Load Balancer with auto-scaling based on CPU and request rate. Pinecone provides managed vector database with automatic scaling. PostgreSQL runs as a managed service (RDS/Azure Database/Cloud SQL) with read replicas for query scaling. Redis provides distributed caching. All services communicate over private networks with TLS encryption.
 
-**Scalability Strategies:**
+- **Scalability Strategies:**
 The stateless API design enables horizontal scaling by adding backend instances. Database connection pooling (SQLAlchemy) efficiently manages PostgreSQL connections. Caching (Redis) reduces LLM API calls and vector searches for common queries. Asynchronous processing (FastAPI async endpoints) handles concurrent requests efficiently. Rate limiting (10 requests/minute per IP) prevents abuse. Batch processing endpoints allow processing multiple patients in parallel using asyncio.gather(). Vector database sharding (Pinecone namespaces) enables partitioning guidelines by specialty or condition for faster retrieval.
 
-**Monitoring:**
+- **Monitoring:**
 Production monitoring tracks: request latency (p50, p95, p99), throughput (requests/second), error rates (4xx, 5xx), LLM API costs (token usage), vector DB query performance, and confidence score distribution. Alerts trigger on high error rates, elevated latency, or API cost spikes. Structured logging (JSON) enables log aggregation and analysis via ELK stack or CloudWatch.
 
-**Cost Optimization:**
+- **Cost Optimization:**
 LLM API costs are the primary expense. Caching reduces redundant API calls. Prompt optimization minimizes token usage. Batch processing amortizes fixed costs. Vector database costs scale with collection size; guideline pruning removes outdated content. Serverless deployment (Cloud Run, Lambda) reduces idle costs for low-traffic periods.
 
 ## 8. Limitations & Future Work
 
 
-**Current Limitations:**
+- **Current Limitations:**
 LLM hallucination risk remains despite RAG grounding; all recommendations require human validation. Guideline coverage is limited to publicly available sources and may not include latest research or specialty guidelines. Context window limits (8k-128k tokens) constrain the number of guidelines that can be included in prompts. Latency of 5-10 seconds per patient may be too slow for real-time clinical workflows. The system is not FDA approved and cannot be used for actual clinical decision-making. Synthetic data training may not reflect real-world complexity and edge cases.
 
-**Future Enhancements:**
+- **Future Enhancements:**
 Short-term improvements include expanding guideline sources (specialty societies, international guidelines), implementing user authentication and session management, and adding support for more clinical conditions. Medium-term enhancements include multi-modal support (lab trends, vital sign graphs, medical images), FHIR integration for EHR connectivity, real-time guideline updates with versioning, and advanced explainability with attention visualization. Long-term vision includes fine-tuned medical LLMs for better clinical reasoning, active learning from clinician feedback, predictive analytics for patient outcomes, multi-language support for global deployment, and mobile applications for point-of-care use.
+
 
 
 
