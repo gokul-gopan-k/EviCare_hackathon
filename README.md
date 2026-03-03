@@ -1,5 +1,7 @@
 # EviCare (Evidence based Care): AI-Powered Clinical Guideline Intelligence
 
+AI For Bharat: AWS GenAI Hackathon | Stage 1 Qualified | Prototype Phase
+
 ## 📋 Project Overview
 
 EviCare is a high-precision Retrieval-Augmented Generation (RAG) platform designed to provide evidence-backed clinical recommendations. It helps healthcare professionals make informed decisions by semantically matching patient conditions with the latest publicly available clinical guidelines (e.g., ICMR, WHO), providing fully cited, transparent recommendations.
