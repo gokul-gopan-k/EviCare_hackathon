@@ -26,3 +26,15 @@ Build a system that delivers accurate, guideline-based recommendations, maintain
 - Two-Stage Retrieval & Reasoning: Combine vector similarity retrieval with cloud-native reranking and LLM reasoning for precise recommendations.
 - Source Transparency: Include citations for all recommendations so clinicians can verify the original guidelines.
 - Infrastructure Optimization: Efficient performance on low-resource environments without compromising reliability.
+
+
+## 📁 Project Structur
+
+EviCare-hackathon/
+├── README.md         # Project overview and documentation
+├── requirements.md   # Stage 1 requirements document
+├── design.md         # Stage 1 design document
+├── EViCare_IdeaSubmission   # Hackathon Stage 1 slides
+├── images/
+│   ├── archi_design.png    # System architecture diagram
+│   └── data_flow.png       # Data flow diagram
