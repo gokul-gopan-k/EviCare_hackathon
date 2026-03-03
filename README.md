@@ -1,4 +1,4 @@
-# EviCare: AI-Powered Clinical Guideline Intelligence
+# EviCare (Evidence based Care): AI-Powered Clinical Guideline Intelligence
 
 ## 📋 Project Overview
 
