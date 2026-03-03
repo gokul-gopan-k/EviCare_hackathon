@@ -28,8 +28,9 @@ Build a system that delivers accurate, guideline-based recommendations, maintain
 - Infrastructure Optimization: Efficient performance on low-resource environments without compromising reliability.
 
 
-## 📁 Project Structur
+## 📁 Project Structure
 
+```
 EviCare-hackathon/
 ├── README.md         # Project overview and documentation
 ├── requirements.md   # Stage 1 requirements document
@@ -38,3 +39,4 @@ EviCare-hackathon/
 ├── images/
 │   ├── archi_design.png    # System architecture diagram
 │   └── data_flow.png       # Data flow diagram
+```
