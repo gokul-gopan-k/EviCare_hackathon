@@ -35,7 +35,7 @@ EviCare-hackathon/
 ├── README.md         # Project overview and documentation
 ├── requirements.md   # Stage 1 requirements document
 ├── design.md         # Stage 1 design document
-├── EViCare_IdeaSubmission   # Hackathon Stage 1 slides
+├── EviCare_IdeaSubmission   # Hackathon Stage 1 slides
 ├── images/
 │   ├── archi_design.png    # System architecture diagram
 │   └── data_flow.png       # Data flow diagram
