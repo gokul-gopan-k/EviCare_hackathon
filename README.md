@@ -1,6 +1,6 @@
 # EviCare (Evidence based Care): AI-Powered Clinical Guideline Intelligence
 
-AI For Bharat: AWS GenAI Hackathon | Stage 1 Qualified | Prototype Phase
+**AI For Bharat: AWS GenAI Hackathon | Stage 1 Qualified | Prototype Phase**
 
 ## 📋 Project Overview
 
